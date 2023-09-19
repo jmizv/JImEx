@@ -456,7 +456,7 @@ public class JIGenericConnection {
         strbuff.append("SQL_CREATE_CATAGORIES=CREATE TABLE Categories (uid VARCHAR(64)  PRIMARY KEY,category   VARCHAR(255))  " + EOL);
         strbuff.append("SQL_CREATE_CATAGORYCHILD=CREATE TABLE CategoryChild (parentUID VARCHAR(64), childUID VARCHAR(64),PRIMARY KEY (parentUID, childUID))   " + EOL);
         strbuff.append("SQL_CREATE_CATAGORYIMAGE=CREATE TABLE CategoryImage (categoryUID  VARCHAR(64), imageUID VARCHAR(64),PRIMARY KEY (categoryUID, imageUID))" + EOL);
-        strbuff.append("SQL_CREATE_IMAGE_TABLE=CREATE TABLE ImageTable (uid varchar(64) PRIMARY KEY,image IMAGE)" + EOL);
+        strbuff.append("SQL_CREATE_IMAGE_TABLE=CREATE TABLE ImageTable (uid varchar(64) PRIMARY KEY,image BINARY)" + EOL);
         strbuff.append("SQL_CREATE_IMAGE_DB=CREATE TABLE ThumbsDB (uid  varchar(64),path varchar(255),PRIMARY KEY (uid),UNIQUE (path))" + EOL);
         return new ByteArrayInputStream(strbuff.toString().getBytes());
     }

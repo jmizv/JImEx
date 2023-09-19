@@ -10,11 +10,9 @@ import org.apache.log4j.BasicConfigurator;
 import de.jmizv.jiexplorer.gui.preferences.JIPreferences;
 
 public class JILoader {
+
     public static boolean loading = true;
 
-    /**
-     * @param args
-     */
     public static void main(final String[] args) {
         JIExplorer.USER_ROOT = System.getProperty("user.home");
         if (System.getProperty("os.name").toLowerCase().startsWith("win")) {
@@ -22,7 +20,7 @@ public class JILoader {
         } else {
             JIExplorer.ROOT_FOLDER = File.separator;
         }
-        if ((args != null) && (args.length > 0)) {
+        if (args != null) {
             for (final String arg : args) {
                 if (arg.equals("-readonly")) {
                     JIPreferences.getInstance().setReadOnly(true);

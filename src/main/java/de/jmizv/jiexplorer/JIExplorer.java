@@ -12,6 +12,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.Serial;
 import java.net.MalformedURLException;
 
 import javax.swing.ImageIcon;
@@ -42,14 +43,13 @@ import de.jmizv.jiexplorer.gui.tree.JIDirTree;
 import de.jmizv.jiexplorer.gui.tree.JITreeNode;
 import de.jmizv.jiexplorer.util.DiskObject;
 import de.jmizv.jiexplorer.util.JIExplorerContext;
+import de.jmizv.jiexplorer.util.JIUtility;
 import de.jmizv.jiexplorer.util.OrderedDiskObjectList;
 
 
 public final class JIExplorer extends JFrame {
-    /**
-     *
-     */
-    private static final long serialVersionUID = -4037233623450799072L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(JIExplorer.class);
 
@@ -90,16 +90,8 @@ public final class JIExplorer extends JFrame {
     private JIExplorerContext context;
 
     static {
-        smallIcon = createImageIcon("./resources/images/JIExplorerIcon32.gif");
-        medIcon = createImageIcon("./resources/images/JIExplorerIcon64.gif");
-    }
-
-    private static ImageIcon createImageIcon(String relativeFileLocation) {
-        try {
-            return new ImageIcon(new File(relativeFileLocation).toURI().toURL());
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        smallIcon = JIUtility.createImageIcon("./resources/images/JIExplorerIcon32.gif");
+        medIcon = JIUtility.createImageIcon("./resources/images/JIExplorerIcon64.gif");
     }
 
     private JIExplorer() {
@@ -281,6 +273,7 @@ public final class JIExplorer extends JFrame {
 
         setJMenuBar(this.jiExplorerMenuBar);
         pack();
+        JIUtility.centerFrameOnScreen(this::getWidth, this::getHeight, () -> getToolkit().getScreenSize(), this::setLocation);
     }
 
     public final void sortFileList() {

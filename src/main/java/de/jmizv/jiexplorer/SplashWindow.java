@@ -1,5 +1,7 @@
 package de.jmizv.jiexplorer;
 
+import de.jmizv.jiexplorer.util.JIUtility;
+
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Frame;
@@ -10,12 +12,13 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.Serial;
 import java.net.URL;
 
 
 /**
  * A Splash window.
- *  <p>
+ * <p>
  * Usage: MyApplication is your application class. Create a Splasher class which
  * opens the splash window, invokes the main method of your Application class,
  * and disposes the splash window afterwards.
@@ -32,17 +35,15 @@ import java.net.URL;
  * }
  * </pre>
  *
- * @author  Werner Randelshofer
+ * @author Werner Randelshofer
  * @version 2.1 2005-04-03 Revised.
  */
 public class SplashWindow extends Window {
 
-    /**
-	 *
-	 */
-	private static final long serialVersionUID = -9172426477606695160L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	/**
+    /**
      * The current instance of the splash window.
      * (Singleton design pattern).
      */
@@ -71,8 +72,9 @@ public class SplashWindow extends Window {
 
     /**
      * Creates a new instance.
+     *
      * @param parent the parent of the window.
-     * @param image the splash image.
+     * @param image  the splash image.
      */
     private SplashWindow(final Frame parent, final java.awt.Image image) {
         super(parent);
@@ -80,35 +82,31 @@ public class SplashWindow extends Window {
 
         // Load the image
         final MediaTracker mt = new MediaTracker(this);
-        mt.addImage(image,0);
+        mt.addImage(image, 0);
         try {
             mt.waitForID(0);
-        } catch(final InterruptedException ie){
+        } catch (final InterruptedException ie) {
 
         }
 
         // Center the window on the screen
-        final int imgWidth = image.getWidth(this);
-        final int imgHeight = image.getHeight(this);
-        setSize(imgWidth, imgHeight);
-        final Dimension screenDim = Toolkit.getDefaultToolkit().getScreenSize();
-        setLocation(
-        (screenDim.width - imgWidth) / 2,
-        (screenDim.height - imgHeight) / 2
-        );
+        JIUtility.centerFrameOnScreen(this::getWidth,
+                this::getHeight,
+                () -> Toolkit.getDefaultToolkit().getScreenSize(),
+                this::setLocation);
 
         // Users shall be able to close the splash window by
         // clicking on its display area. This mouse listener
         // listens for mouse clicks and disposes the splash window.
         final MouseAdapter disposeOnClick = new MouseAdapter() {
             @Override
-			public void mouseClicked(MouseEvent evt) {
+            public void mouseClicked(MouseEvent evt) {
                 // Note: To avoid that method splash hangs, we
                 // must set paintCalled to true and call notifyAll.
                 // This is necessary because the mouse click may
                 // occur before the contents of the window
                 // has been painted.
-                synchronized(SplashWindow.this) {
+                synchronized (SplashWindow.this) {
                     SplashWindow.this.paintCalled = true;
                     SplashWindow.this.notifyAll();
                 }
@@ -119,13 +117,14 @@ public class SplashWindow extends Window {
     }
 
     public static SplashWindow instance() {
-    	return instance;
+        return instance;
     }
+
     /**
      * Updates the display area of the window.
      */
     @Override
-	public void update(final Graphics g) {
+    public void update(final Graphics g) {
         // Note: Since the paint method is going to draw an
         // image that covers the complete area of the component we
         // do not fill the component with its background color
@@ -138,9 +137,9 @@ public class SplashWindow extends Window {
      */
     @Override
     public void paint(final Graphics g) {
-    	g.drawImage(this.image, 0, 0, this);
+        g.drawImage(this.image, 0, 0, this);
 
-    	//g.drawImage(icon,25+progress, 257,this);g
+        //g.drawImage(icon,25+progress, 257,this);g
 //    	g.setColor(Color.red);
 //    	g.fillRoundRect(10+progress, 260, 88, 4, 2, 2);
 //    	progress += increment;
@@ -151,42 +150,42 @@ public class SplashWindow extends Window {
 //    		increment = 5;
 //    	}
 
-    	// Notify method splash that the window
-    	// has been painted.
-    	// Note: To improve performance we do not enter
-    	// the synchronized block unless we have to.
-    	if (!this.paintCalled) {
-    		this.paintCalled = true;
-    		synchronized (this) { notifyAll(); }
-    	}
+        // Notify method splash that the window
+        // has been painted.
+        // Note: To improve performance we do not enter
+        // the synchronized block unless we have to.
+        if (!this.paintCalled) {
+            this.paintCalled = true;
+            synchronized (this) {
+                notifyAll();
+            }
+        }
     }
 
     public static void progbar(final int i) {
 //    	if (instance != null) {
 //			instance.repaint();
 //		}
-     }
+    }
 
     public static void setInstanceCursor(final java.awt.Cursor cursor) {
-    	if (instance != null) {
-    		instance.setCursor(cursor);
-    		synchronized (instance) { instance.notifyAll(); }
-    	}
+        if (instance != null) {
+            instance.setCursor(cursor);
+            synchronized (instance) {
+                instance.notifyAll();
+            }
+        }
     }
 
     /**
      * Open's a splash window using the specified image.
+     *
      * @param image The splash image.
      */
     public static void splash(final Image image) {
         if ((instance == null) && (image != null)) {
-            final Frame f = new Frame();
-
-            // Create the splash image
+            Frame f = new Frame();
             instance = new SplashWindow(f, image);
-
-            // Show the window.
-            //instance.show();
             instance.setVisible(true);
 
             // Note: To make sure the user gets a chance to see the
@@ -194,25 +193,29 @@ public class SplashWindow extends Window {
             // called at least once by the AWT event dispatcher thread.
             // If more than one processor is available, we don't wait,
             // and maximize CPU throughput instead.
-            if (! EventQueue.isDispatchThread()
-            && (Runtime.getRuntime().availableProcessors() == 1)) {
-				synchronized (instance) {
-                    while (! instance.paintCalled) {
-						try { instance.wait(); } catch (final InterruptedException e) {}
-					}
+            if (!EventQueue.isDispatchThread()
+                && (Runtime.getRuntime().availableProcessors() == 1)) {
+                synchronized (instance) {
+                    while (!instance.paintCalled) {
+                        try {
+                            instance.wait();
+                        } catch (final InterruptedException e) {
+                        }
+                    }
                 }
-			}
+            }
         }
     }
 
     /**
      * Open's a splash window using the specified image.
+     *
      * @param imageURL The url of the splash image.
      */
     public static void splash(final URL imageURL) {
         if (imageURL != null) {
-			splash(Toolkit.getDefaultToolkit().createImage(imageURL));
-		}
+            splash(Toolkit.getDefaultToolkit().createImage(imageURL));
+        }
     }
 
     /**
@@ -227,34 +230,27 @@ public class SplashWindow extends Window {
 
     /**
      * Invokes the main method of the provided class name.
+     *
      * @param args the command line arguments
      */
     public static void invokeMain(final String className, final String[] args) {
         try {
-           Class.forName(className)
-            .getMethod("main", String[].class)
-            .invoke(Class.forName(className), new Object[] {args});
+            Class.forName(className)
+                    .getMethod("main", String[].class)
+                    .invoke(Class.forName(className), new Object[]{args});
         } catch (final Exception e) {
-            final InternalError error = new InternalError("Failed to invoke main method");
-            error.initCause(e);
-            throw error;
+            throw new InternalError("Failed to invoke main method", e);
         }
     }
 
-	/**
-	 * @return the loadingDB
-	 */
-	public final boolean isLoadingDB() {
-		return this.loadingDB;
-	}
+    public final boolean isLoadingDB() {
+        return this.loadingDB;
+    }
 
-	/**
-	 * @param loadingDB the loadingDB to set
-	 */
-	public final static void setLoadingDB(final boolean loadingDB) {
-    	if (instance != null) {
-    		instance.loadingDB = loadingDB;
-    		instance.repaint();
-    	}
-	}
+    public final static void setLoadingDB(final boolean loadingDB) {
+        if (instance != null) {
+            instance.loadingDB = loadingDB;
+            instance.repaint();
+        }
+    }
 }

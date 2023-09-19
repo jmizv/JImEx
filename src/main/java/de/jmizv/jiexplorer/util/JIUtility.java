@@ -1,7 +1,6 @@
 package de.jmizv.jiexplorer.util;
 
 import com.drew.imaging.jpeg.JpegMetadataReader;
-import com.drew.lang.RandomAccessFileReader;
 import com.drew.lang.RandomAccessReader;
 import com.drew.lang.RandomAccessStreamReader;
 import com.drew.metadata.Metadata;
@@ -39,6 +38,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Vector;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -71,7 +72,7 @@ public final class JIUtility {
     public static int EXIF = 0xE1;
     public static int IPTC = 0xED;
 
-    private static final Set<String> unwanted = new HashSet<String>();
+    private static final Set<String> unwanted = new HashSet<>();
 
     static {
         unwanted.add("com.sun.media.imageioimpl.plugins.jpeg.CLibJPEGImageReader");
@@ -84,7 +85,7 @@ public final class JIUtility {
         //startIdx and idxOld delimit various chunks of aInput; these
         //chunks always end where aOldPattern begins
         int startIdx = 0;
-        int idxOld = 0;
+        int idxOld;
         while ((idxOld = path.indexOf("\\", startIdx)) >= 0) {
             //grab a part of aInput which does not include aOldPattern
             result.append(path, startIdx, idxOld);
@@ -108,7 +109,7 @@ public final class JIUtility {
             //startIdx and idxOld delimit various chunks of aInput; these
             //chunks always end where aOldPattern begins
             int startIdx = 0;
-            int idxOld = 0;
+            int idxOld;
             while ((idxOld = path.indexOf("/", startIdx)) >= 0) {
                 //grab a part of aInput which does not include aOldPattern
                 result.append(path, startIdx, idxOld);
@@ -142,35 +143,14 @@ public final class JIUtility {
     public static String length2KB(final long length) {
         final long kbCount = (length + 1024) / 1024;
         final String strlength = String.valueOf(kbCount);
-        return String.valueOf((kbCount > 999 ? strlength.substring(0, strlength.length() - 3) + "," + strlength.substring(strlength.length() - 3) : strlength) + " KB ");
+        return (kbCount > 999 ? strlength.substring(0, strlength.length() - 3) + "," + strlength.substring(strlength.length() - 3) : strlength) + " KB ";
     }
 
-    static final class FileSystemRoot extends File {
-
-        /**
-         *
-         */
-        private static final long serialVersionUID = 3548015838168969234L;
-
-        public FileSystemRoot(final File f) {
-            super(f, "");
-        }
-
-        public FileSystemRoot(final String s) {
-            super(s);
-        }
-
-        @Override
-        public boolean isDirectory() {
-            return true;
-        }
-    }
-
-    public final static int freeMem() {
+    public static int freeMem() {
         return (int) Runtime.getRuntime().freeMemory() / 1024 / 1024;
     }
 
-    public final static String memoryInf() { //boolean clean) {
+    public static String memoryInf() { //boolean clean) {
         final long freeMem = Runtime.getRuntime().freeMemory();
         final long totalMem = Runtime.getRuntime().totalMemory();
         final long maxMem = Runtime.getRuntime().maxMemory();
@@ -179,7 +159,7 @@ public final class JIUtility {
                            " Total Mem: " + totalMem / 1024 / 1024 +
                            " Max Mem: " + maxMem / 1024 / 1024;
 
-        if (true && ((double) totalMem / (double) maxMem > .75) && (freeMem < 40)) {
+        if (((double) totalMem / (double) maxMem > .75) && (freeMem < 40)) {
             System.runFinalization();
             System.gc();
             return msg + " - Clean up run";
@@ -187,13 +167,13 @@ public final class JIUtility {
         return msg;
     }
 
-    public final static File[] getRoots() {
+    public static File[] getRoots() {
         return constructRoots();
     }
 
-    private final static File[] constructRoots() {
+    private static File[] constructRoots() {
         File[] roots;
-        final Vector<File> rootsVector = new Vector<File>();
+        final Vector<File> rootsVector = new Vector<>();
 
         if (osName.toLowerCase().startsWith("win")) {
             // Run through all possible mount points and check
@@ -222,7 +202,7 @@ public final class JIUtility {
         return roots;
     }
 
-    public final static Icon getSystemIcon(final DiskObject dObj) {
+    public static Icon getSystemIcon(final DiskObject dObj) {
         if (dObj.getFile().exists()) {
             return FileSystemView.getFileSystemView().getSystemIcon(dObj.getFile());
         } else {
@@ -230,7 +210,7 @@ public final class JIUtility {
         }
     }
 
-    public final static Icon getSystemIcon(final File f) {
+    public static Icon getSystemIcon(final File f) {
         if (f.exists()) {
             return FileSystemView.getFileSystemView().getSystemIcon(f);
         } else {
@@ -238,7 +218,7 @@ public final class JIUtility {
         }
     }
 
-    public final static String suffix(final String name) {
+    public static String suffix(final String name) {
         final int i = name.lastIndexOf('.');
         if (i > 0) {
             return name.toLowerCase().substring(i + 1);
@@ -246,7 +226,7 @@ public final class JIUtility {
         return null;
     }
 
-    public final static boolean isSupportedImage(final String suffix) {
+    public static boolean isSupportedImage(final String suffix) {
         return suffix.equals("jpg") ||
                suffix.equals("gif") ||
                suffix.equals("png") ||
@@ -261,7 +241,7 @@ public final class JIUtility {
         //suffix.equals("tif");
     }
 
-    public final static boolean isSupportedImage(final File file) {
+    public static boolean isSupportedImage(final File file) {
         final String fileName = file.getName().toLowerCase();
         return fileName.endsWith(".jpg") ||
                fileName.endsWith(".gif") ||
@@ -277,7 +257,7 @@ public final class JIUtility {
         //fileName.endsWith(".tif");
     }
 
-    public final static BufferedImage openImage(final DiskObject dObj) {
+    public static BufferedImage openImage(final DiskObject dObj) {
         try {
             if (dObj.getSuffix().equals("cr2") || dObj.getSuffix().equals("crw")) {
                 final ImageReader imageReader = getImageReader(dObj);
@@ -296,8 +276,8 @@ public final class JIUtility {
         }
     }
 
-    public final static ExifDirectoryBase getExifDirectory(final Node node) {
-        if (node.getNodeName() == "unknown") {
+    public static ExifDirectoryBase getExifDirectory(final Node node) {
+        if (node.getNodeName().equals("unknown")) {
             if (Integer.parseInt(node.getAttributes().getNamedItem("MarkerTag").getNodeValue()) == EXIF) {
                 final byte[] data = (byte[]) ((IIOMetadataNode) node).getUserObject();
                 RandomAccessReader reader = new RandomAccessStreamReader(new ByteArrayInputStream(data));
@@ -317,7 +297,7 @@ public final class JIUtility {
         return null;
     }
 
-    public final static BufferedImage blankImage() {
+    public static BufferedImage blankImage() {
         final BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_INT_RGB);
         final Graphics2D g2d = image.createGraphics();
         g2d.setColor(Color.GRAY);
@@ -326,7 +306,7 @@ public final class JIUtility {
         return image;
     }
 
-    public final static float scaleFactor(final Dimension d1, final int w, final int h) {
+    public static float scaleFactor(final Dimension d1, final int w, final int h) {
         return Math.min((float) d1.width / w, (float) d1.height / h);
     }
 
@@ -433,24 +413,19 @@ public final class JIUtility {
         g2d.drawImage(image, transform, null);
         g2d.dispose();
 
-        image = null;
         return copy;
     }
 
     public static boolean requestReplaceFile(final String path) {
-
-        final int rcode = JOptionPane.showConfirmDialog(null,
+        int rcode = JOptionPane.showConfirmDialog(null,
                 "Do you want to replace \"" + path + "\" ?",
                 "choose one", JOptionPane.YES_NO_OPTION);
 
-        if (rcode == JOptionPane.YES_OPTION) {
-            return true;
-        }
-        return false;
+        return rcode == JOptionPane.YES_OPTION;
     }
 
 
-    public final static int getFileCount(final File dir) {
+    public static int getFileCount(final File dir) {
         int results = 1;
 
         if (!dir.isDirectory()) {
@@ -464,7 +439,7 @@ public final class JIUtility {
         return results;
     }
 
-    public final static void deleteDirectory(final File dir) {
+    public static void deleteDirectory(final File dir) {
         if ((dir == null) || !dir.isDirectory() || dir.isHidden()) {
             return;
         }
@@ -536,8 +511,7 @@ public final class JIUtility {
     // This method returns true if the specified image has transparent pixels
     public static boolean hasAlpha(final Image image) {
         // If buffered image, the color model is readily available
-        if (image instanceof BufferedImage) {
-            final BufferedImage bimage = (BufferedImage) image;
+        if (image instanceof BufferedImage bimage) {
             return bimage.getColorModel().hasAlpha();
         }
 
@@ -555,7 +529,7 @@ public final class JIUtility {
     }
 
 
-    public static final BufferedImage createThumbnailRetry(final DiskObject thumbnail) {
+    public static BufferedImage createThumbnailRetry(final DiskObject thumbnail) {
         int retryCounter = 2;
         while (retryCounter > 0) {
             try {
@@ -575,7 +549,7 @@ public final class JIUtility {
         return null;
     }
 
-    private static final BufferedImage createThumbnail(final DiskObject diskObject) throws IOException {
+    private static BufferedImage createThumbnail(final DiskObject diskObject) throws IOException {
         final String fname = diskObject.getName().toLowerCase();
 
         if (fname.endsWith("jpg") || fname.endsWith("jpeg")) {
@@ -587,7 +561,7 @@ public final class JIUtility {
         return createThumbnailFromFile(diskObject);
     }
 
-    private static final BufferedImage createThumbnailFromFile(final DiskObject diskObject) {
+    private static BufferedImage createThumbnailFromFile(final DiskObject diskObject) {
         BufferedImage image;
         ImageReader reader = null;
 
@@ -1029,5 +1003,15 @@ public final class JIUtility {
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void centerFrameOnScreen(Supplier<Integer> widthSupplier,
+                                           Supplier<Integer> heightSupplier,
+                                           Supplier<Dimension> screenSizeSupplier,
+                                           BiConsumer<Integer, Integer> consumer) {
+        Dimension screenSize = screenSizeSupplier.get();
+        int x = screenSize.width / 2 - widthSupplier.get() / 2;
+        int y = screenSize.height / 2 - heightSupplier.get() / 2;
+        consumer.accept(x, y);
     }
 }
